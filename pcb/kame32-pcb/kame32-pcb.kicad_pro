@@ -494,7 +494,32 @@
       "version": 4
     },
     "net_colors": null,
-    "netclass_assignments": null,
+    "netclass_assignments": {
+      "/Vs1": [
+        "Vs1"
+      ],
+      "/Vs2": [
+        "Vs2"
+      ],
+      "Net-(J2-Pin_1)": [
+        "Vs1"
+      ],
+      "Net-(J6-Pin_1)": [
+        "Vs2"
+      ],
+      "unconnected-(C1-Pad1)": [
+        "Vs1"
+      ],
+      "unconnected-(C2-Pad1)": [
+        "Vs2"
+      ],
+      "unconnected-(U1-+Vout-Pad4)": [
+        "Vs1"
+      ],
+      "unconnected-(U3-+Vout-Pad4)": [
+        "Vs2"
+      ]
+    },
     "netclass_patterns": [
       {
         "netclass": "power",
@@ -511,6 +536,14 @@
       {
         "netclass": "power",
         "pattern": "+BATT"
+      },
+      {
+        "netclass": "power",
+        "pattern": "/Vs1"
+      },
+      {
+        "netclass": "power",
+        "pattern": "/Vs2"
       }
     ]
   },
