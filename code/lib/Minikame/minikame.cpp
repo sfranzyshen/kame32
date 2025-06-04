@@ -1,13 +1,5 @@
 #include "minikame.h"
 
-#define SERVO_0_PIN 25
-#define SERVO_1_PIN 26
-#define SERVO_2_PIN 18
-#define SERVO_3_PIN 19
-#define SERVO_4_PIN 32
-#define SERVO_5_PIN 33
-#define SERVO_6_PIN 5
-#define SERVO_7_PIN 21
 
 void MiniKame::init(){
     // Map between servos and board pins
@@ -20,15 +12,20 @@ void MiniKame::init(){
     board_pins[6] = SERVO_6_PIN;
     board_pins[7] = SERVO_7_PIN;
 
-    // Trim values for zero position calibration.
-    trim[0] = 5;
-    trim[1] = -5;
-    trim[2] = -3;
-    trim[3] = 6;
-    trim[4] = 2;
-    trim[5] = -5;
-    trim[6] = -17;
-    trim[7] = 2;
+    // YELLOW
+    // calibration values for zero position calibration.
+    /*calibration[0] = 5;
+    calibration[1] = -5;
+    calibration[2] = -3;
+    calibration[3] = 6;
+    calibration[4] = 2;
+    calibration[5] = -5;
+    calibration[6] = -17;
+    calibration[7] = 2;*/
+
+    for(int i=0; i<8; i++){
+        calibration[i] = 0; 
+    }
 
     // Set reverse movement
     for (int i=0; i<8; i++) reverse[i] = false;
@@ -36,7 +33,7 @@ void MiniKame::init(){
     // Init an oscillator for each servo
     for(int i=0; i<8; i++){
         oscillator[i].start();
-        if(i!=3)servo[i].attach(board_pins[i]);
+        servo[i].attach(board_pins[i]);
     }
     zero();
 }
@@ -343,12 +340,15 @@ void MiniKame::reverseServo(int id){
         reverse[id] = 1;
 }
 
+void MiniKame::setCalibration(int calibration[8]){
+    for(int i=0; i<8; i++) this->calibration[i] = calibration[i];
+}
 
 void MiniKame::setServo(int id, float target){
     if (!reverse[id])
-        servo[id].writeMicroseconds(angToUsec(target+trim[id]));
+        servo[id].writeMicroseconds(angToUsec(target+calibration[id]));
     else
-        servo[id].writeMicroseconds(angToUsec(180-(target+trim[id])));
+        servo[id].writeMicroseconds(angToUsec(180-(target+calibration[id])));
     _servo_position[id] = target;
 }
 

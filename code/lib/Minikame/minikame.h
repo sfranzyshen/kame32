@@ -4,6 +4,15 @@
 #include <ESP32Servo.h>
 #include <Octosnake.h>
 
+#define SERVO_0_PIN 26
+#define SERVO_1_PIN 25
+#define SERVO_2_PIN 18
+#define SERVO_3_PIN 19
+#define SERVO_4_PIN 32
+#define SERVO_5_PIN 33
+#define SERVO_6_PIN 5
+#define SERVO_7_PIN 21
+
 class MiniKame{
 public:
     void init();
@@ -24,6 +33,7 @@ public:
     void zero();
     void frontBack(float steps, int period);
 
+    void setCalibration(int calibration[8]);
     void setServo(int id, float target);
     void reverseServo(int id);
     float getServo(int id);
@@ -33,7 +43,7 @@ private:
     Oscillator oscillator[8];
     Servo servo[8];
     int board_pins[8];
-    int trim[8];
+    int calibration[8];
     bool reverse[8];
     unsigned long _init_time;
     unsigned long _final_time;

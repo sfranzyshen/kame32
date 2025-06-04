@@ -1,3 +1,6 @@
+#ifndef platformio_env
+#define platformio_env
+
 //  Servos:
 //
 //  |\ ____   ________   ______/|
@@ -17,6 +20,7 @@
 #include <ESPmDNS.h>
 #include <web_template.h>
 #include <minikame.h>
+#include <config.h>
 
 #define SSID        "Kame32"
 #define PASSWORD    "00000000"
@@ -77,6 +81,7 @@ void spinner(uint32_t ms) {
 void setup() {
     Serial.begin(115200);
     robot.init();
+    robot.setCalibration(servo_calibration);
     robot.home();
 
     pinMode(LED_PIN, OUTPUT);
@@ -93,7 +98,7 @@ void setup() {
 }
 
 void loop() {
-    server.handleClient();
+    /*server.handleClient();
     if (command != "") {
         digitalWrite(LED_PIN, HIGH);
         if (command == "forward") {
@@ -120,5 +125,8 @@ void loop() {
             robot.home();
         }
         digitalWrite(LED_PIN, LOW);
-    }
+    }*/
+   robot.zero();
 }
+
+#endif
