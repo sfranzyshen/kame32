@@ -5,7 +5,7 @@
 #define AP_PASSWORD    "00000000"
 
 // Offset for each servo to reach its zero position
-int servo_calibration[8] = { -7, 11, -4, -23, -2, 4, -20, 5 };
-
+//int servo_calibration[8] = { -7, 11, -4, -23, -2, 4, -20, 5 };
+int servo_calibration[8] = {2, -5, -1, 26, 2, -2, 5, 6};
 
 #endif

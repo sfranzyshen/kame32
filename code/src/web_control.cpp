@@ -1,18 +1,6 @@
 #ifndef platformio_env
 #define platformio_env
 
-//  Servos:
-//
-//  |\ ____   ________   ______/|
-//  |(2)___)(0)      (1)(____(3)|
-//  |__/    |   KAME   |     \__|
-//          |          |
-//  |\_____ |          | ______/|
-//  |(6)___)(4)______(5)(____(7)|
-//  |__/                     \__|
-//               / \
-//                |
-//           USBs |
 
 #include <ESP32Servo.h>
 #include <WiFi.h>
@@ -98,7 +86,7 @@ void setup() {
 }
 
 void loop() {
-    /*server.handleClient();
+    server.handleClient();
     if (command != "") {
         digitalWrite(LED_PIN, HIGH);
         if (command == "forward") {
@@ -125,8 +113,7 @@ void loop() {
             robot.home();
         }
         digitalWrite(LED_PIN, LOW);
-    }*/
-   robot.zero();
+    }
 }
 
 #endif
