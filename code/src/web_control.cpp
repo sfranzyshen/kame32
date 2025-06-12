@@ -69,7 +69,7 @@ void spinner(uint32_t ms) {
 void setup() {
     Serial.begin(115200);
     robot.init();
-    robot.setCalibration(servo_calibration);
+    robot.loadCalibration();
     robot.home();
 
     pinMode(LED_PIN, OUTPUT);

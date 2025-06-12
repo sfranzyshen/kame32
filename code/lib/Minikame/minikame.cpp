@@ -12,19 +12,9 @@ void MiniKame::init(){
     board_pins[6] = SERVO_6_PIN;
     board_pins[7] = SERVO_7_PIN;
 
-    // YELLOW
-    // calibration values for zero position calibration.
-    /*calibration[0] = 5;
-    calibration[1] = -5;
-    calibration[2] = -3;
-    calibration[3] = 6;
-    calibration[4] = 2;
-    calibration[5] = -5;
-    calibration[6] = -17;
-    calibration[7] = 2;*/
-
+    // Initialize servo calibration
     for(int i=0; i<8; i++){
-        calibration[i] = 0; 
+        calibration[i] = 0;
     }
 
     // Set reverse movement
@@ -35,7 +25,96 @@ void MiniKame::init(){
         oscillator[i].start();
         servo[i].attach(board_pins[i]);
     }
+
     zero();
+}
+
+
+void MiniKame::setCalibration(int new_calibration[8]){
+    for(int i=0; i<8; i++) calibration[i] = new_calibration[i];
+}
+
+int* MiniKame::loadCalibration(){
+    if (NVS.begin()){
+        for (int i = 0; i < 8; i++){
+            calibration[i] = NVS.getInt("servo" + String(i), 0);
+        }
+        return calibration;
+    }
+    else{
+        return nullptr;
+    }
+}
+
+void MiniKame::saveCalibration(int new_calibration[8]){
+    if (NVS.begin()){
+        for (int i = 0; i < 8; i++){
+            NVS.setInt("servo" + String(i), calibration[i]);
+        }
+    }
+}
+
+void MiniKame::reverseServo(int id){
+    if (reverse[id])
+        reverse[id] = 0;
+    else
+        reverse[id] = 1;
+}
+
+
+void MiniKame::setServo(int id, float target){
+    if (!reverse[id])
+        servo[id].writeMicroseconds(angToUsec(target+calibration[id]));
+    else
+        servo[id].writeMicroseconds(angToUsec(180-(target+calibration[id])));
+    _servo_position[id] = target;
+}
+
+float MiniKame::getServo(int id){
+    return _servo_position[id];
+}
+
+void MiniKame::moveServos(int time, float target[8]) {
+    if (time>10){
+        for (int i = 0; i < 8; i++)	_increment[i] = (target[i] - _servo_position[i]) / (time / 10.0);
+        _final_time =  millis() + time;
+
+        while (millis() < _final_time){
+            _partial_time = millis() + 10;
+            for (int i = 0; i < 8; i++) setServo(i, _servo_position[i] + _increment[i]);
+            while (millis() < _partial_time); //pause
+        }
+    }
+    else{
+        for (int i = 0; i < 8; i++) setServo(i, target[i]);
+    }
+    for (int i = 0; i < 8; i++) _servo_position[i] = target[i];
+}
+
+void MiniKame::execute(float steps, int period[8], int amplitude[8], int offset[8], int phase[8]){
+
+    for (int i=0; i<8; i++){
+        oscillator[i].setPeriod(period[i]);
+        oscillator[i].setAmplitude(amplitude[i]);
+        oscillator[i].setPhase(phase[i]);
+        oscillator[i].setOffset(offset[i]);
+    }
+
+    unsigned long global_time = millis();
+
+    for (int i=0; i<8; i++) oscillator[i].setTime(global_time);
+
+    _final_time = millis() + period[0]*steps;
+    while (millis() < _final_time){
+        for (int i=0; i<8; i++){
+            setServo(i, oscillator[i].refresh());
+        }
+        yield();
+    }
+}
+
+int MiniKame::angToUsec(float value){
+    return value/180 * (MAX_PULSE_WIDTH-MIN_PULSE_WIDTH) + MIN_PULSE_WIDTH;
 }
 
 void MiniKame::turnR(float steps, int T=600){
@@ -307,7 +386,6 @@ void MiniKame::hello(){
     float goingUp[]={160,20,90,90,90-20,90+20,90+10,90-10};
     moveServos(500, goingUp);
     delay(200);
-
 }
 
 void MiniKame::jump(){
@@ -331,70 +409,4 @@ void MiniKame::home(){
 
 void MiniKame::zero(){
     for (int i=0; i<8; i++) setServo(i, 90);
-}
-
-void MiniKame::reverseServo(int id){
-    if (reverse[id])
-        reverse[id] = 0;
-    else
-        reverse[id] = 1;
-}
-
-void MiniKame::setCalibration(int calibration[8]){
-    for(int i=0; i<8; i++) this->calibration[i] = calibration[i];
-}
-
-void MiniKame::setServo(int id, float target){
-    if (!reverse[id])
-        servo[id].writeMicroseconds(angToUsec(target+calibration[id]));
-    else
-        servo[id].writeMicroseconds(angToUsec(180-(target+calibration[id])));
-    _servo_position[id] = target;
-}
-
-float MiniKame::getServo(int id){
-    return _servo_position[id];
-}
-
-void MiniKame::moveServos(int time, float target[8]) {
-    if (time>10){
-        for (int i = 0; i < 8; i++)	_increment[i] = (target[i] - _servo_position[i]) / (time / 10.0);
-        _final_time =  millis() + time;
-
-        while (millis() < _final_time){
-            _partial_time = millis() + 10;
-            for (int i = 0; i < 8; i++) setServo(i, _servo_position[i] + _increment[i]);
-            while (millis() < _partial_time); //pause
-        }
-    }
-    else{
-        for (int i = 0; i < 8; i++) setServo(i, target[i]);
-    }
-    for (int i = 0; i < 8; i++) _servo_position[i] = target[i];
-}
-
-void MiniKame::execute(float steps, int period[8], int amplitude[8], int offset[8], int phase[8]){
-
-    for (int i=0; i<8; i++){
-        oscillator[i].setPeriod(period[i]);
-        oscillator[i].setAmplitude(amplitude[i]);
-        oscillator[i].setPhase(phase[i]);
-        oscillator[i].setOffset(offset[i]);
-    }
-
-    unsigned long global_time = millis();
-
-    for (int i=0; i<8; i++) oscillator[i].setTime(global_time);
-
-    _final_time = millis() + period[0]*steps;
-    while (millis() < _final_time){
-        for (int i=0; i<8; i++){
-            setServo(i, oscillator[i].refresh());
-        }
-        yield();
-    }
-}
-
-int MiniKame::angToUsec(float value){
-    return value/180 * (MAX_PULSE_WIDTH-MIN_PULSE_WIDTH) + MIN_PULSE_WIDTH;
 }

@@ -117,7 +117,6 @@ void handleRoot() {
         </html>
         )rawliteral";
 
-    
     server.send(200, "text/html", html);
 }
 
