@@ -3,8 +3,8 @@
 <p align="center">
   <img src="doc/kame32.jpg">
 </p>
-# License 
 
+# License 
 This robot is licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
 
 <p align="center">
