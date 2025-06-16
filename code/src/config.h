@@ -1,11 +1,10 @@
 #ifndef config_h
 #define config_h
 
-#define AP_SSID        "Kame32"
-#define AP_PASSWORD    "00000000"
+#define SSID        "Kame32"
+#define PASSWORD    "00000000"
+#define HOSTNAME    "kame32"
 
-// Offset for each servo to reach its zero position
-//int servo_calibration[8] = { -7, 11, -4, -23, -2, 4, -20, 5 };
-int servo_calibration[8] = {2, -5, -1, 26, 2, -2, 5, 6};
+int servo_calibration[8] = {2, -5, -1, 6, 2, -2, 5, 6};
 
 #endif
