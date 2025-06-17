@@ -1,8 +1,3 @@
-#ifndef platformio_env
-#define platformio_env
-
-
-#include <ESP32Servo.h>
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
@@ -10,9 +5,6 @@
 #include <minikame.h>
 #include <config.h>
 
-#define SSID        "Kame32"
-#define PASSWORD    "00000000"
-#define LED_PIN     2
 
 MiniKame robot;
 WebServer server(80);
@@ -68,17 +60,18 @@ void spinner(uint32_t ms) {
 
 void setup() {
     Serial.begin(115200);
-    robot.init();
-    robot.loadCalibration();
-    robot.home();
-
     pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
 
     WiFi.mode(WIFI_AP);
     WiFi.softAP(SSID, PASSWORD);
-    Serial.println(WiFi.softAPIP());
-    MDNS.begin("kame32");
+    //WiFi.mode(WIFI_STA);
+    //WiFi.begin(SSID, PASSWORD);
+    MDNS.begin(HOSTNAME);
+
+    robot.init();
+    robot.loadCalibration();
+    //robot.setCalibration(servo_calibration);
+    robot.home();
 
     server.on("/", handleRoot);
     server.on("/cmd", handleCmd);
@@ -115,5 +108,3 @@ void loop() {
         digitalWrite(LED_PIN, LOW);
     }
 }
-
-#endif

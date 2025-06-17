@@ -1,19 +1,20 @@
 #ifndef minikame_h
 #define minikame_h
 
-#include <ESP32Servo.h>
 #include <Octosnake.h>
 #include <ArduinoNvs.h>
 
-#define SERVO_0_PIN 26
-#define SERVO_1_PIN 25
-#define SERVO_2_PIN 18
-#define SERVO_3_PIN 19
-#define SERVO_4_PIN 32
-#define SERVO_5_PIN 33
-#define SERVO_6_PIN 5
-#define SERVO_7_PIN 21
+#define SERVO_0_PIN         26
+#define SERVO_1_PIN         25
+#define SERVO_2_PIN         18
+#define SERVO_3_PIN         19
+#define SERVO_4_PIN         32
+#define SERVO_5_PIN         33
+#define SERVO_6_PIN         5
+#define SERVO_7_PIN         21
 
+#define MIN_PWM_DUTY        1638
+#define MAX_PWM_DUTY        8191
 
 class MiniKame{
 public:
@@ -46,7 +47,6 @@ public:
 
 private:
     Oscillator oscillator[8];
-    Servo servo[8];
     int board_pins[8];
     int calibration[8];
     bool reverse[8];

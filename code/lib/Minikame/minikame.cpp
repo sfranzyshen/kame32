@@ -23,7 +23,8 @@ void MiniKame::init(){
     // Init an oscillator for each servo
     for(int i=0; i<8; i++){
         oscillator[i].start();
-        servo[i].attach(board_pins[i]);
+        ledcSetup(i, 50, 16);
+        ledcAttachPin(board_pins[i], i);
     }
 
     zero();
@@ -63,10 +64,15 @@ void MiniKame::reverseServo(int id){
 
 
 void MiniKame::setServo(int id, float target){
+    int duty;
+    float value = target + calibration[id];
+    value = constrain(value, 0.0, 180.0);
     if (!reverse[id])
-        servo[id].writeMicroseconds(angToUsec(target+calibration[id]));
+        duty = value/180.0 * (MAX_PWM_DUTY-MIN_PWM_DUTY) + MIN_PWM_DUTY;
     else
-        servo[id].writeMicroseconds(angToUsec(180-(target+calibration[id])));
+        duty = (180-value)/180.0 * (MAX_PWM_DUTY-MIN_PWM_DUTY) + MIN_PWM_DUTY;
+
+    ledcWrite(id, duty);
     _servo_position[id] = target;
 }
 
@@ -74,10 +80,12 @@ float MiniKame::getServo(int id){
     return _servo_position[id];
 }
 
-void MiniKame::moveServos(int time, float target[8]) {
-    if (time>10){
-        for (int i = 0; i < 8; i++)	_increment[i] = (target[i] - _servo_position[i]) / (time / 10.0);
-        _final_time =  millis() + time;
+void MiniKame::moveServos(int ms, float target[8]) {
+    if (ms>10){
+        for (int i=0; i<8; i++)
+            _increment[i] = (target[i] - _servo_position[i]) / (ms / 10.0);
+
+        _final_time = millis() + ms;
 
         while (millis() < _final_time){
             _partial_time = millis() + 10;
@@ -86,9 +94,9 @@ void MiniKame::moveServos(int time, float target[8]) {
         }
     }
     else{
-        for (int i = 0; i < 8; i++) setServo(i, target[i]);
+        for (int i=0; i<8; i++) setServo(i, target[i]);
     }
-    for (int i = 0; i < 8; i++) _servo_position[i] = target[i];
+    for (int i=0; i<8; i++) _servo_position[i] = target[i];
 }
 
 void MiniKame::execute(float steps, int period[8], int amplitude[8], int offset[8], int phase[8]){
@@ -111,10 +119,6 @@ void MiniKame::execute(float steps, int period[8], int amplitude[8], int offset[
         }
         yield();
     }
-}
-
-int MiniKame::angToUsec(float value){
-    return value/180 * (MAX_PULSE_WIDTH-MIN_PULSE_WIDTH) + MIN_PULSE_WIDTH;
 }
 
 void MiniKame::turnR(float steps, int T=600){

@@ -12,7 +12,6 @@
 //           USB  |
 
 
-#include <ESP32Servo.h>
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
@@ -167,13 +166,12 @@ void handleDecrease(){
 
 void setup() {
     Serial.begin(115200);
-    delay(1000);
 
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(AP_SSID, AP_PASSWORD);
+    WiFi.softAP(SSID, PASSWORD);
     //WiFi.mode(WIFI_STA);
-    //WiFi.begin("xxx", "xxx");
-    MDNS.begin("kame32");
+    //WiFi.begin(SSID, PASSWORD);
+    MDNS.begin(HOSTNAME);
 
     robot.init();
     robot.setCalibration(calibration);
