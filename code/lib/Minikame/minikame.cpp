@@ -195,39 +195,53 @@ void MiniKame::run(float steps, int T=5000){
     execute(steps, period, amplitude, offset, phase);
 }
 
-void MiniKame::omniWalk(float steps, int T, bool side, float turn_factor){
-    int x_amp = 15;
-    int z_amp = 15;
-    int ap = 15;
-    int hi = 23;
-    int front_x = 6 * (1-pow(turn_factor, 2));
-    int period[] = {T, T, T, T, T, T, T, T};
+void MiniKame::omniWalk(float steps, int T){
+    int x_amp = 0;
+    int z_amp = 20;
+    int ap = 20;
+    int hi = 10;
+    int front_x = 12;
+    int period[] = {T, T, T/2, T/2, T, T, T/2, T/2};
     int amplitude[] = {x_amp,x_amp,z_amp,z_amp,x_amp,x_amp,z_amp,z_amp};
-    int offset[] = {    90+ap-front_x,
-                        90-ap+front_x,
+    int offset[] = {    90+ap,
+                        90-ap,
                         90-hi,
                         90+hi,
-                        90-ap-front_x,
-                        90+ap+front_x,
+                        90-ap,
+                        90+ap,
                         90+hi,
                         90-hi
                     };
+    int  phase[] = {90, 90, 270, 90, 270, 270, 90, 270};
 
-    int phase[8];
-    if (side){
-        int phase1[] =  {0,   0,   90,  90,  180, 180, 90,  90};
-        int phase2R[] = {0,   180, 90,  90,  180, 0,   90,  90};
-        for (int i=0; i<8; i++)
-            phase[i] = phase1[i]*(1-turn_factor) + phase2R[i]*turn_factor;
-    }
-    else{
-        int phase1[] =  {0,   0,   90,  90,  180, 180, 90,  90};
-        int phase2L[] = {180, 0,   90,  90,  0,   180, 90,  90};
-        for (int i=0; i<8; i++)
-            phase[i] = phase1[i]*(1-turn_factor) + phase2L[i]*turn_factor + oscillator[i].getPhaseProgress();
+    for (int i=0; i<8; i++){
+        oscillator[i].reset();
+        oscillator[i].setPeriod(period[i]);
+        oscillator[i].setAmplitude(amplitude[i]);
+        oscillator[i].setPhase(phase[i]);
+        oscillator[i].setOffset(offset[i]);
     }
 
-    execute(steps, period, amplitude, offset, phase);
+    _final_time = millis() + period[0]*steps;
+    _init_time = millis();
+    bool side;
+    while (millis() < _final_time){
+        side = (int)((millis()-_init_time) / (period[0]/2)) % 2;
+        setServo(0, oscillator[0].refresh());
+        setServo(1, oscillator[1].refresh());
+        setServo(4, oscillator[4].refresh());
+        setServo(5, oscillator[5].refresh());
+
+        if (side == 0){
+            setServo(3, oscillator[3].refresh());
+            setServo(6, oscillator[6].refresh());
+        }
+        else{
+            setServo(2, oscillator[2].refresh());
+            setServo(7, oscillator[7].refresh());
+        }
+        delay(1);
+    }
 }
 
 void MiniKame::moonwalkL(float steps, int T=5000){

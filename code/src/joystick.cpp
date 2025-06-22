@@ -5,12 +5,6 @@
 #include <minikame.h>
 
 
-MiniKame robot;
-WebServer server(80);
-
-int joystick_x = 0;
-int joystick_y = 0;
-
 String html = R"rawliteral(
 <!DOCTYPE html>
 <html>
@@ -136,14 +130,23 @@ String html = R"rawliteral(
 )rawliteral";
 
 
+MiniKame robot;
+WebServer server(80);
+
+int joy_x = 0;
+int joy_y = 0;
+bool start = false;
+unsigned long start_time = 0;
+
+
 void handleRoot() {
     server.send(200, "text/html", html);
 }
 
 void handleJoystick() {
     if (server.hasArg("x") && server.hasArg("y")) {
-        joystick_x = server.arg("x").toInt();
-        joystick_y = server.arg("y").toInt();
+        joy_x = server.arg("x").toInt();
+        joy_y = server.arg("y").toInt();
         server.send(200, "text/plain", "OK");
     } else {
         server.send(400, "text/plain", "Missing x or y");
@@ -151,43 +154,163 @@ void handleJoystick() {
 }
 
 void handleStart() {
-    robot.home();
-        server.send(200, "text/plain", "Started");
+    start = true;
+    server.send(200, "text/plain", "Started");
 }
 
+int a = 10;
+
 void handleStop() {
-    robot.zero();
-        server.send(200, "text/plain", "Stopped");
+    start = false;
+    server.send(200, "text/plain", "Stopped");
 }
+
+int output = 0;
+float progress = 0;
+
+int T = 2000; // Period in milliseconds
+int x_amp = 15;
+int z_amp = 20;
+int ap = 20;
+int hi = 10;
+float front_x = 0; //12;
+int period[] = {T, T, T/2, T/2, T, T, T/2, T/2};
+int amplitude[] = {x_amp,x_amp,z_amp,z_amp,x_amp,x_amp,z_amp,z_amp};
+int offset[] = {    90+ap-front_x,
+                    90-ap+front_x,
+                    90-hi,
+                    90+hi,
+                    90-ap-front_x,
+                    90+ap+front_x,
+                    90+hi,
+                    90-hi
+                };
+int  phase[] = {90, 90, 270, 90, 270, 270, 90, 270};
 
 void setup() {
     Serial.begin(115200);
-    //pinMode(LED_PIN, OUTPUT);
 
     WiFi.mode(WIFI_AP);
     WiFi.softAP(SSID, PASSWORD);
     //WiFi.mode(WIFI_STA);
     //WiFi.begin(SSID, PASSWORD);
     MDNS.begin(HOSTNAME);
-
+    
     robot.init();
     robot.loadCalibration();
-    //robot.setCalibration(servo_calibration);
+
     robot.home();
+
+    for (int i=0; i<8; i++){
+        robot.oscillator[i].reset();
+        robot.oscillator[i].setPeriod(period[i]);
+        robot.oscillator[i].setAmplitude(amplitude[i]);
+        robot.oscillator[i].setPhase(phase[i]);
+        robot.oscillator[i].setOffset(offset[i]);
+    }
 
     server.on("/", handleRoot);
     server.on("/joystick", handleJoystick);
     server.on("/start", handleStart);
     server.on("/stop", handleStop);
-    
+
     server.begin();
+
 }
 
 
+float m_period = 400;
+int m_amp = 0;
+
+
+void updateParameters() {
+    if (Serial.available() > 0) {
+        char key = Serial.read();
+        if (key == 'a') {
+            m_amp++;
+            if (m_amp > 20) m_amp = 20;
+        } else if (key == 'z') {
+            m_amp--;
+            if (m_amp < -20) m_amp = -20;
+        }
+        else if (key == 's') {
+            m_period += 100;
+            if (m_period > 5000) m_period = 5000;
+        } else if (key == 'x') {
+            m_period -= 100;
+            if (m_period < 300) m_period = 300;
+        }
+    }
+}
+
+float p[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
 void loop() {
     server.handleClient();
-
-    robot.setServo(0, 120 + joystick_x * -0.2);
-    robot.setServo(2, 90 + joystick_y * 0.2);
+    //updateParameters();
+    //robot.setServo(0, 120 + joy_x * -0.2);
+    //robot.setServo(2, 90 + joy_y * 0.2);
     
+    progress += robot.oscillator[0].getPhaseProgress();
+    while(progress > 360) progress -= 360;
+    
+    m_amp = joy_y * 0.25;
+    Serial.print("Amplitude: ");
+    Serial.println(m_amp);
+    front_x = m_amp * 0.8;
+
+    robot.oscillator[0].setAmplitude(m_amp);
+    robot.oscillator[1].setAmplitude(m_amp);
+    robot.oscillator[4].setAmplitude(m_amp);
+    robot.oscillator[5].setAmplitude(m_amp);
+
+    robot.oscillator[0].setOffset(90 + ap - front_x);
+    robot.oscillator[1].setOffset(90 - ap + front_x);
+    robot.oscillator[4].setOffset(90 - ap - front_x);
+    robot.oscillator[5].setOffset(90 + ap + front_x);
+
+    robot.oscillator[0].setPeriod(m_period);
+    robot.oscillator[1].setPeriod(m_period);
+    robot.oscillator[4].setPeriod(m_period);
+    robot.oscillator[5].setPeriod(m_period);
+    
+    robot.oscillator[2].setPeriod(m_period / 2);
+    robot.oscillator[3].setPeriod(m_period / 2);
+    robot.oscillator[6].setPeriod(m_period / 2);
+    robot.oscillator[7].setPeriod(m_period / 2);
+
+    p[0] = phase[0] + progress;
+    p[1] = phase[1] + progress;
+    p[2] = phase[2] + 2*progress;
+    p[3] = phase[3] + 2*progress;
+    p[4] = phase[4] + progress;
+    p[5] = phase[5] + progress;
+    p[6] = phase[6] + 2*progress;
+    p[7] = phase[7] + 2*progress;
+
+    for (int i = 0; i < 8; i++) {
+        robot.oscillator[i].setPhase(p[i]);
+        robot.oscillator[i].reset();
+    }
+
+    bool side;
+    side = progress > 180 ? true : false;
+
+    if (start) {
+        robot.setServo(0, robot.oscillator[0].refresh());
+        robot.setServo(1, robot.oscillator[1].refresh());
+        robot.setServo(4, robot.oscillator[4].refresh());
+        robot.setServo(5, robot.oscillator[5].refresh());
+
+        if (!side) {
+            robot.setServo(3, robot.oscillator[3].refresh());
+            robot.setServo(6, robot.oscillator[6].refresh());
+        } else {
+            robot.setServo(2, robot.oscillator[2].refresh());
+            robot.setServo(7, robot.oscillator[7].refresh());
+        }
+    }
+    else{
+        robot.home();
+    }
 }

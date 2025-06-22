@@ -32,7 +32,7 @@ public:
     void run(float steps, int period);
     void walk(float steps, int period);
     void backward(float steps, int period);
-    void omniWalk(float steps, int T, bool side, float turn_factor);
+    void omniWalk(float steps, int T);
     void turnL(float steps, int period);
     void turnR(float steps, int period);
     void moonwalkL(float steps, int period);
@@ -45,7 +45,7 @@ public:
     void zero();
     void frontBack(float steps, int period);
 
-private:
+//private:
     Oscillator oscillator[8];
     int board_pins[8];
     int calibration[8];

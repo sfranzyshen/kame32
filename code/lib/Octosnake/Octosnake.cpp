@@ -6,13 +6,15 @@ Oscillator::Oscillator(){
     _phase = 0;
     _offset = 0;
     _stop = true;
-    _ref_time = millis();
+    _ref_time = micros();
     _delta_time = 0;
+    _output = 90;
 }
 
 float Oscillator::refresh(){
     if (!_stop){
-        _delta_time = (millis()-_ref_time) % _period;
+        float elapsed = (float)(micros() - _ref_time);
+        _delta_time = elapsed - _period * floor(elapsed / _period);
         _output =   (float)_amplitude*sin(time_to_radians(_delta_time)
                     + degrees_to_radians(_phase))
                     + _offset;
@@ -22,7 +24,7 @@ float Oscillator::refresh(){
 }
 
 void Oscillator::reset(){
-    _ref_time = millis();
+    _ref_time = micros();
 }
 
 void Oscillator::start(){
@@ -39,19 +41,23 @@ void Oscillator::stop(){
     _stop = true;
 }
 
-void Oscillator::setPeriod(int period){
-    _period = period;
+void Oscillator::setPeriod(float period){
+    _period = period*1000; // Convert seconds to milliseconds
 }
 
-void Oscillator::setAmplitude(int amplitude){
+void Oscillator::setAmplitude(float amplitude){
     _amplitude = amplitude;
 }
 
-void Oscillator::setPhase(int phase){
+void Oscillator::setPhase(float phase){
     _phase = phase;
 }
 
-void Oscillator::setOffset(int offset){
+float Oscillator::getPhase(){
+    return _phase;
+}
+
+void Oscillator::setOffset(float offset){
     _offset = offset;
 }
 
@@ -68,6 +74,8 @@ unsigned long Oscillator::getTime(){
 }
 
 float Oscillator::getPhaseProgress(){
+    float elapsed = (float)(micros() - _ref_time);
+    _delta_time = elapsed - _period * floor(elapsed / _period);
     return ((float)_delta_time/_period) * 360;
 }
 
