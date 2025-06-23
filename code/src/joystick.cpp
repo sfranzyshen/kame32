@@ -75,15 +75,16 @@ String html = R"rawliteral(
 
     let lastSent = 0;
     let throttleTime = 50; // milisegundos
+    let touchActive = false;
 
     function sendJoystick(x, y) {
-        const now = Date.now();
-        if (now - lastSent >= throttleTime) {
+      const now = Date.now();
+      if (now - lastSent >= throttleTime) {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", `/joystick?x=${x}&y=${y}`);
         xhr.send();
         lastSent = now;
-        }
+      }
     }
 
     function sendStart() {
@@ -98,8 +99,20 @@ String html = R"rawliteral(
       xhr.send();
     }
 
+    function resetJoystick() {
+      dot.style.left = "50px";
+      dot.style.top = "50px";
+      sendJoystick(0, 0);
+      touchActive = false;
+    }
+
+    stick.addEventListener("touchstart", function () {
+      touchActive = true;
+    });
+
     stick.addEventListener("touchmove", function (e) {
       e.preventDefault();
+      touchActive = true;
       const touch = e.touches[0];
       const rect = stick.getBoundingClientRect();
       let x = touch.clientX - rect.left;
@@ -117,17 +130,20 @@ String html = R"rawliteral(
       sendJoystick(xVal, yVal);
     }, { passive: false });
 
-    stick.addEventListener("touchend", function () {
-      dot.style.left = "50px";
-      dot.style.top = "50px";
-      sendJoystick(0, 0);
-    });
-  </script>
+    document.addEventListener("touchend", resetJoystick);
+    document.addEventListener("touchcancel", resetJoystick);
+    document.addEventListener("touchleave", resetJoystick);
 
+    setInterval(() => {
+      if (!touchActive) {
+        sendJoystick(0, 0);
+      }
+    }, 200); // every 200ms
+  </script>
 </body>
 </html>
-
 )rawliteral";
+
 
 
 MiniKame robot;
@@ -165,27 +181,17 @@ void handleStop() {
     server.send(200, "text/plain", "Stopped");
 }
 
-int output = 0;
-float progress = 0;
 
-int T = 2000; // Period in milliseconds
-int x_amp = 15;
-int z_amp = 20;
-int ap = 20;
-int hi = 10;
-float front_x = 0; //12;
-int period[] = {T, T, T/2, T/2, T, T, T/2, T/2};
-int amplitude[] = {x_amp,x_amp,z_amp,z_amp,x_amp,x_amp,z_amp,z_amp};
-int offset[] = {    90+ap-front_x,
-                    90-ap+front_x,
-                    90-hi,
-                    90+hi,
-                    90-ap-front_x,
-                    90+ap+front_x,
-                    90+hi,
-                    90-hi
-                };
-int  phase[] = {90, 90, 270, 90, 270, 270, 90, 270};
+float progress = 0;
+float period = 450;
+float leg_spread = 20;
+float body_height = 10;
+float body_shift = 0;
+float step_amplitude = 0;
+float step_height = 20;
+float phase_linear[] =  {90,  90,  270, 90,  270, 270, 90,  270};
+float phase_angular[] = {90,  270, 270, 90,  270, 90,  90,  270};
+float phase[] =         {0,   0,   0,   0,   0,   0,   0,   0};
 
 void setup() {
     Serial.begin(115200);
@@ -201,97 +207,82 @@ void setup() {
 
     robot.home();
 
-    for (int i=0; i<8; i++){
-        robot.oscillator[i].reset();
-        robot.oscillator[i].setPeriod(period[i]);
-        robot.oscillator[i].setAmplitude(amplitude[i]);
-        robot.oscillator[i].setPhase(phase[i]);
-        robot.oscillator[i].setOffset(offset[i]);
-    }
-
     server.on("/", handleRoot);
     server.on("/joystick", handleJoystick);
     server.on("/start", handleStart);
     server.on("/stop", handleStop);
 
     server.begin();
-
 }
-
-
-float m_period = 400;
-int m_amp = 0;
-
-
-void updateParameters() {
-    if (Serial.available() > 0) {
-        char key = Serial.read();
-        if (key == 'a') {
-            m_amp++;
-            if (m_amp > 20) m_amp = 20;
-        } else if (key == 'z') {
-            m_amp--;
-            if (m_amp < -20) m_amp = -20;
-        }
-        else if (key == 's') {
-            m_period += 100;
-            if (m_period > 5000) m_period = 5000;
-        } else if (key == 'x') {
-            m_period -= 100;
-            if (m_period < 300) m_period = 300;
-        }
-    }
-}
-
-float p[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 void loop() {
     server.handleClient();
-    //updateParameters();
-    //robot.setServo(0, 120 + joy_x * -0.2);
-    //robot.setServo(2, 90 + joy_y * 0.2);
-    
+
     progress += robot.oscillator[0].getPhaseProgress();
     while(progress > 360) progress -= 360;
-    
-    m_amp = joy_y * 0.25;
-    Serial.print("Amplitude: ");
-    Serial.println(m_amp);
-    front_x = m_amp * 0.8;
 
-    robot.oscillator[0].setAmplitude(m_amp);
-    robot.oscillator[1].setAmplitude(m_amp);
-    robot.oscillator[4].setAmplitude(m_amp);
-    robot.oscillator[5].setAmplitude(m_amp);
+    if (abs(joy_y) >= abs(joy_x)) {
+        // Linear movement
+        step_amplitude = joy_y * 0.25;
+        body_shift = step_amplitude * 0.8;
 
-    robot.oscillator[0].setOffset(90 + ap - front_x);
-    robot.oscillator[1].setOffset(90 - ap + front_x);
-    robot.oscillator[4].setOffset(90 - ap - front_x);
-    robot.oscillator[5].setOffset(90 + ap + front_x);
+        phase[0] = phase_linear[0] + progress;
+        phase[1] = phase_linear[1] + progress;
+        phase[2] = phase_linear[2] + 2 * progress;
+        phase[3] = phase_linear[3] + 2 * progress;
+        phase[4] = phase_linear[4] + progress;
+        phase[5] = phase_linear[5] + progress;
+        phase[6] = phase_linear[6] + 2 * progress;
+        phase[7] = phase_linear[7] + 2 * progress;
+    } else {
+        // Angular movement
+        step_amplitude = joy_x * 0.25;
+        body_shift = 0.0;
 
-    robot.oscillator[0].setPeriod(m_period);
-    robot.oscillator[1].setPeriod(m_period);
-    robot.oscillator[4].setPeriod(m_period);
-    robot.oscillator[5].setPeriod(m_period);
-    
-    robot.oscillator[2].setPeriod(m_period / 2);
-    robot.oscillator[3].setPeriod(m_period / 2);
-    robot.oscillator[6].setPeriod(m_period / 2);
-    robot.oscillator[7].setPeriod(m_period / 2);
-
-    p[0] = phase[0] + progress;
-    p[1] = phase[1] + progress;
-    p[2] = phase[2] + 2*progress;
-    p[3] = phase[3] + 2*progress;
-    p[4] = phase[4] + progress;
-    p[5] = phase[5] + progress;
-    p[6] = phase[6] + 2*progress;
-    p[7] = phase[7] + 2*progress;
+        phase[0] = phase_angular[0] + progress;
+        phase[1] = phase_angular[1] + progress;
+        phase[2] = phase_angular[2] + 2 * progress;
+        phase[3] = phase_angular[3] + 2 * progress;
+        phase[4] = phase_angular[4] + progress;
+        phase[5] = phase_angular[5] + progress;
+        phase[6] = phase_angular[6] + 2 * progress;
+        phase[7] = phase_angular[7] + 2 * progress;
+    }
 
     for (int i = 0; i < 8; i++) {
-        robot.oscillator[i].setPhase(p[i]);
+        robot.oscillator[i].setPhase(phase[i]);
         robot.oscillator[i].reset();
     }
+
+    robot.oscillator[0].setAmplitude(step_amplitude);
+    robot.oscillator[1].setAmplitude(step_amplitude);
+    robot.oscillator[4].setAmplitude(step_amplitude);
+    robot.oscillator[5].setAmplitude(step_amplitude);
+
+    robot.oscillator[2].setAmplitude(step_height);
+    robot.oscillator[3].setAmplitude(step_height);
+    robot.oscillator[6].setAmplitude(step_height);
+    robot.oscillator[7].setAmplitude(step_height);
+
+    robot.oscillator[0].setOffset(90 + leg_spread - body_shift);
+    robot.oscillator[1].setOffset(90 - leg_spread + body_shift);
+    robot.oscillator[4].setOffset(90 - leg_spread - body_shift);
+    robot.oscillator[5].setOffset(90 + leg_spread + body_shift);
+
+    robot.oscillator[2].setOffset(90 - body_height);
+    robot.oscillator[3].setOffset(90 + body_height);
+    robot.oscillator[6].setOffset(90 + body_height);
+    robot.oscillator[7].setOffset(90 - body_height);
+
+    robot.oscillator[0].setPeriod(period);
+    robot.oscillator[1].setPeriod(period);
+    robot.oscillator[4].setPeriod(period);
+    robot.oscillator[5].setPeriod(period);
+
+    robot.oscillator[2].setPeriod(period / 2);
+    robot.oscillator[3].setPeriod(period / 2);
+    robot.oscillator[6].setPeriod(period / 2);
+    robot.oscillator[7].setPeriod(period / 2);
 
     bool side;
     side = progress > 180 ? true : false;
