@@ -2,7 +2,7 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <config.h>
-#include <minikame.h>
+#include <kame.h>
 
 
 String html = R"rawliteral(
@@ -146,7 +146,7 @@ String html = R"rawliteral(
 
 
 
-MiniKame robot;
+Kame robot;
 WebServer server(80);
 
 int joy_x = 0;

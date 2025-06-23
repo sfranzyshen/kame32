@@ -2,11 +2,11 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <web_template.h>
-#include <minikame.h>
+#include <kame.h>
 #include <config.h>
 
 
-MiniKame robot;
+Kame robot;
 WebServer server(80);
 String command = "";
 

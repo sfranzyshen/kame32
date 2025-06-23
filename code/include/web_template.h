@@ -7,7 +7,7 @@ const char* htmlTemplate = R"rawliteral(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MiniKame Gamepad</title>
+    <title>Kame Gamepad</title>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;

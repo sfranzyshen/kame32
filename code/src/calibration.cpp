@@ -16,12 +16,12 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <ArduinoNvs.h>
-#include <minikame.h>
+#include <kame.h>
 #include <config.h>
 
 WebServer server(80);
 int calibration[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 
-MiniKame robot;
+Kame robot;
 
 
 void handleRoot() {

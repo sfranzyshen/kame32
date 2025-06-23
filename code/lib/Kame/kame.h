@@ -1,5 +1,5 @@
-#ifndef minikame_h
-#define minikame_h
+#ifndef kame_h
+#define kame_h
 
 #include <Octosnake.h>
 #include <ArduinoNvs.h>
@@ -16,7 +16,7 @@
 #define MIN_PWM_DUTY        1638
 #define MAX_PWM_DUTY        8191
 
-class MiniKame{
+class Kame{
 public:
     void init();
 

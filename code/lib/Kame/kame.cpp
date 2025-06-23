@@ -1,7 +1,7 @@
-#include "minikame.h"
+#include "kame.h"
 
 
-void MiniKame::init(){
+void Kame::init(){
     // Map between servos and board pins
     board_pins[0] = SERVO_0_PIN;
     board_pins[1] = SERVO_1_PIN;
@@ -31,11 +31,11 @@ void MiniKame::init(){
 }
 
 
-void MiniKame::setCalibration(int new_calibration[8]){
+void Kame::setCalibration(int new_calibration[8]){
     for(int i=0; i<8; i++) calibration[i] = new_calibration[i];
 }
 
-int* MiniKame::loadCalibration(){
+int* Kame::loadCalibration(){
     if (NVS.begin()){
         for (int i = 0; i < 8; i++){
             calibration[i] = NVS.getInt("servo" + String(i), 0);
@@ -47,7 +47,7 @@ int* MiniKame::loadCalibration(){
     }
 }
 
-void MiniKame::saveCalibration(int new_calibration[8]){
+void Kame::saveCalibration(int new_calibration[8]){
     if (NVS.begin()){
         for (int i = 0; i < 8; i++){
             NVS.setInt("servo" + String(i), calibration[i]);
@@ -55,7 +55,7 @@ void MiniKame::saveCalibration(int new_calibration[8]){
     }
 }
 
-void MiniKame::reverseServo(int id){
+void Kame::reverseServo(int id){
     if (reverse[id])
         reverse[id] = 0;
     else
@@ -63,7 +63,7 @@ void MiniKame::reverseServo(int id){
 }
 
 
-void MiniKame::setServo(int id, float target){
+void Kame::setServo(int id, float target){
     int duty;
     float value = target + calibration[id];
     value = constrain(value, 0.0, 180.0);
@@ -76,11 +76,11 @@ void MiniKame::setServo(int id, float target){
     _servo_position[id] = target;
 }
 
-float MiniKame::getServo(int id){
+float Kame::getServo(int id){
     return _servo_position[id];
 }
 
-void MiniKame::moveServos(int ms, float target[8]) {
+void Kame::moveServos(int ms, float target[8]) {
     if (ms>10){
         for (int i=0; i<8; i++)
             _increment[i] = (target[i] - _servo_position[i]) / (ms / 10.0);
@@ -99,7 +99,7 @@ void MiniKame::moveServos(int ms, float target[8]) {
     for (int i=0; i<8; i++) _servo_position[i] = target[i];
 }
 
-void MiniKame::execute(float steps, int period[8], int amplitude[8], int offset[8], int phase[8]){
+void Kame::execute(float steps, int period[8], int amplitude[8], int offset[8], int phase[8]){
 
     for (int i=0; i<8; i++){
         oscillator[i].setPeriod(period[i]);
@@ -121,7 +121,7 @@ void MiniKame::execute(float steps, int period[8], int amplitude[8], int offset[
     }
 }
 
-void MiniKame::turnR(float steps, int T=600){
+void Kame::turnR(float steps, int T=600){
     int x_amp = 15;
     int z_amp = 15;
     int ap = 15;
@@ -134,7 +134,7 @@ void MiniKame::turnR(float steps, int T=600){
     execute(steps, period, amplitude, offset, phase);
 }
 
-void MiniKame::turnL(float steps, int T=600){
+void Kame::turnL(float steps, int T=600){
     int x_amp = 15;
     int z_amp = 15;
     int ap = 15;
@@ -147,7 +147,7 @@ void MiniKame::turnL(float steps, int T=600){
     execute(steps, period, amplitude, offset, phase);
 }
 
-void MiniKame::dance(float steps, int T=600){
+void Kame::dance(float steps, int T=600){
     int x_amp = 0;
     int z_amp = 40;
     int ap = 30;
@@ -160,7 +160,7 @@ void MiniKame::dance(float steps, int T=600){
     execute(steps, period, amplitude, offset, phase);
 }
 
-void MiniKame::frontBack(float steps, int T=600){
+void Kame::frontBack(float steps, int T=600){
     int x_amp = 30;
     int z_amp = 25;
     int ap = 20;
@@ -173,7 +173,7 @@ void MiniKame::frontBack(float steps, int T=600){
     execute(steps, period, amplitude, offset, phase);
 }
 
-void MiniKame::run(float steps, int T=5000){
+void Kame::run(float steps, int T=5000){
     int x_amp = 15;
     int z_amp = 15;
     int ap = 15;
@@ -195,7 +195,7 @@ void MiniKame::run(float steps, int T=5000){
     execute(steps, period, amplitude, offset, phase);
 }
 
-void MiniKame::omniWalk(float steps, int T){
+void Kame::omniWalk(float steps, int T){
     int x_amp = 0;
     int z_amp = 20;
     int ap = 20;
@@ -244,7 +244,7 @@ void MiniKame::omniWalk(float steps, int T){
     }
 }
 
-void MiniKame::moonwalkL(float steps, int T=5000){
+void Kame::moonwalkL(float steps, int T=5000){
     int z_amp = 45;
     int period[] = {T, T, T, T, T, T, T, T};
     int amplitude[] = {0,0,z_amp,z_amp,0,0,z_amp,z_amp};
@@ -254,7 +254,7 @@ void MiniKame::moonwalkL(float steps, int T=5000){
     execute(steps, period, amplitude, offset, phase);
 }
 
-void MiniKame::walk(float steps, int T=5000){
+void Kame::walk(float steps, int T=5000){
     int x_amp = 15;
     int z_amp = 20;
     int ap = 20;
@@ -303,7 +303,7 @@ void MiniKame::walk(float steps, int T=5000){
     }
 }
 
-void MiniKame::backward(float steps, int T=5000){
+void Kame::backward(float steps, int T=5000){
     int x_amp = 15;
     int z_amp = 20;
     int ap = 20;
@@ -352,7 +352,7 @@ void MiniKame::backward(float steps, int T=5000){
     }
 }
 
-void MiniKame::upDown(float steps, int T=5000){
+void Kame::upDown(float steps, int T=5000){
     int x_amp = 0;
     int z_amp = 35;
     int ap = 20;
@@ -374,7 +374,7 @@ void MiniKame::upDown(float steps, int T=5000){
     execute(steps, period, amplitude, offset, phase);
 }
 
-void MiniKame::pushUp(float steps, int T=600){
+void Kame::pushUp(float steps, int T=600){
     int z_amp = 40;
     int x_amp = 65;
     int hi = 30;
@@ -386,7 +386,7 @@ void MiniKame::pushUp(float steps, int T=600){
     execute(steps, period, amplitude, offset, phase);
 }
 
-void MiniKame::hello(){
+void Kame::hello(){
     float sentado[]={90+15,90-15,90-65,90+65,90+20,90-20,90+10,90-10};
     moveServos(150, sentado);
     delay(200);
@@ -406,7 +406,7 @@ void MiniKame::hello(){
     delay(200);
 }
 
-void MiniKame::jump(){
+void Kame::jump(){
     float sentado[]={90+15,90-15,90-65,90+65,90+20,90-20,90+10,90-10};
     float ap = 20.0;
     float hi = 35.0;
@@ -418,13 +418,13 @@ void MiniKame::jump(){
     home();
 }
 
-void MiniKame::home(){
+void Kame::home(){
     int ap = 20;
     int hi = 35;
     int position[] = {90+ap,90-ap,90-hi,90+hi,90-ap,90+ap,90+hi,90-hi};
     for (int i=0; i<8; i++) setServo(i, position[i]);
 }
 
-void MiniKame::zero(){
+void Kame::zero(){
     for (int i=0; i<8; i++) setServo(i, 90);
 }
