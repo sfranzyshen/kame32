@@ -26,8 +26,9 @@ void Kame::init(){
         ledcSetup(i, 50, 16);
         ledcAttachPin(board_pins[i], i);
     }
-
-    zero();
+    
+    arm();
+    home();
 }
 
 
@@ -55,6 +56,19 @@ void Kame::saveCalibration(int new_calibration[8]){
     }
 }
 
+void Kame::arm(){
+    _armed = true;
+    home();
+}
+
+void Kame::disarm(){
+    _armed = false;
+    for (int i=0; i<8; i++){
+        ledcWrite(i, 0);
+        _servo_position[i] = -1.0;
+    }
+}
+
 void Kame::reverseServo(int id){
     if (reverse[id])
         reverse[id] = 0;
@@ -64,6 +78,8 @@ void Kame::reverseServo(int id){
 
 
 void Kame::setServo(int id, float target){
+    if(!_armed) return;
+    
     int duty;
     float value = target + calibration[id];
     value = constrain(value, 0.0, 180.0);

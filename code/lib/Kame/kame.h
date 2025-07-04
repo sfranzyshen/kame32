@@ -23,6 +23,10 @@ public:
     void setCalibration(int calibration[8]);
     int* loadCalibration();
     void saveCalibration(int calibration[8]);
+
+    void arm();
+    void disarm();
+
     void reverseServo(int id);
 
     void setServo(int id, float target);
@@ -55,6 +59,7 @@ public:
     unsigned long _partial_time;
     float _increment[8];
     float _servo_position[8];
+    bool _armed = false;
 
     int angToUsec(float value);
     void execute(float steps, int period[8], int amplitude[8], int offset[8], int phase[8]);
